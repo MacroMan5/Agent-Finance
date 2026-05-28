@@ -1,0 +1,9 @@
+{
+  "ticker": "AAPL",
+  "currency": "USD",
+  "price": 211.45,
+  "shares_outstanding": 15204137000,
+  "market_cap": 3217395000000,
+  "ev_ebitda_forward": 22.5,
+  "beta": 1.24
+}

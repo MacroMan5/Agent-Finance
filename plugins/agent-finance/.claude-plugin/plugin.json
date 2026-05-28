@@ -1,0 +1,8 @@
+{
+  "name": "agent-finance",
+  "version": "0.1.0",
+  "description": "Market-finance research harness: company profiles, financial statements, valuation, DCF, sector comps, multi-scenario Excel modeling (Bull/Base/Bear).",
+  "author": { "name": "Emile Théroux" },
+  "license": "MIT",
+  "keywords": ["finance", "research", "valuation", "equity"]
+}

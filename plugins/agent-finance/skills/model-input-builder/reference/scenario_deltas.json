@@ -1,0 +1,63 @@
+{
+  "_comment": "Deltas applied to base values to derive bull/bear scenarios. Positive = higher in bull, lower in bear.",
+  "rev_growth": {
+    "bull": 0.02,
+    "bear": -0.02,
+    "units": "pct",
+    "description": "Revenue growth rate delta (absolute percentage points)"
+  },
+  "gross_margin": {
+    "bull": 0.02,
+    "bear": -0.03,
+    "units": "pct",
+    "description": "Gross margin delta (absolute percentage points)"
+  },
+  "sga_pct": {
+    "bull": -0.01,
+    "bear": 0.02,
+    "units": "pct",
+    "description": "SG&A as % of revenue delta (negative bull = less spend)"
+  },
+  "rnd_pct": {
+    "bull": 0.0,
+    "bear": 0.01,
+    "units": "pct",
+    "description": "R&D as % of revenue delta"
+  },
+  "tax_rate": {
+    "bull": -0.01,
+    "bear": 0.02,
+    "units": "pct",
+    "description": "Effective tax rate delta (lower in bull)"
+  },
+  "payout": {
+    "bull": 0.02,
+    "bear": -0.02,
+    "units": "pct",
+    "description": "Dividend payout ratio delta"
+  },
+  "beta": {
+    "bull": -0.1,
+    "bear": 0.2,
+    "units": "ratio",
+    "description": "Beta delta (lower beta in bull = lower cost of equity)"
+  },
+  "erp": {
+    "bull": -0.005,
+    "bear": 0.01,
+    "units": "pct",
+    "description": "Equity risk premium delta"
+  },
+  "tgr": {
+    "bull": 0.005,
+    "bear": -0.005,
+    "units": "pct",
+    "description": "Terminal growth rate delta"
+  },
+  "exit_mult": {
+    "bull": 2.0,
+    "bear": -3.0,
+    "units": "x",
+    "description": "Exit EV/EBITDA multiple delta"
+  }
+}

@@ -1,0 +1,125 @@
+{
+  "in_rev_growth_base": {
+    "source_file": "earnings-analysis.json",
+    "json_path": "consensus.revenue_growth_next_year",
+    "transform": "identity",
+    "fallback": null,
+    "critical": true
+  },
+  "in_gross_margin_base": {
+    "source_file": "financial-statements.json",
+    "json_path": "annual[-1].gross_margin",
+    "transform": "identity",
+    "fallback": "mean(annual[*].gross_margin)",
+    "critical": true
+  },
+  "in_sga_pct_base": {
+    "source_file": "financial-statements.json",
+    "json_path": "annual[-1].sga_pct_revenue",
+    "transform": "identity",
+    "fallback": "mean(annual[*].sga_pct_revenue)",
+    "critical": true
+  },
+  "in_rnd_pct_base": {
+    "source_file": "financial-statements.json",
+    "json_path": "annual[-1].rd_pct_revenue",
+    "transform": "identity",
+    "fallback": "mean(annual[*].rd_pct_revenue)",
+    "critical": false
+  },
+  "in_tax_rate_base": {
+    "source_file": "financial-statements.json",
+    "json_path": "annual[-1].effective_tax_rate",
+    "transform": "identity",
+    "fallback": "mean(annual[*].effective_tax_rate)",
+    "critical": true
+  },
+  "in_payout_base": {
+    "source_file": "financial-statements.json",
+    "json_path": "annual[-1].dividend_payout_ratio",
+    "transform": "identity",
+    "fallback": null,
+    "critical": false
+  },
+  "in_beta_base": {
+    "source_file": "valuation-multiples.json",
+    "json_path": "beta",
+    "transform": "identity",
+    "fallback": null,
+    "critical": true
+  },
+  "in_erp_base": {
+    "source_file": "macro-context.json",
+    "json_path": "equity_risk_premium",
+    "transform": "identity",
+    "fallback": "0.055",
+    "critical": true
+  },
+  "in_tgr_base": {
+    "source_file": "macro-context.json",
+    "json_path": "long_term_growth_rate",
+    "transform": "identity",
+    "fallback": "0.025",
+    "critical": true
+  },
+  "in_exit_mult_base": {
+    "source_file": "valuation-multiples.json",
+    "json_path": "ev_ebitda_forward",
+    "transform": "identity",
+    "fallback": null,
+    "critical": false
+  },
+  "in_scenario": {
+    "source_file": null,
+    "json_path": null,
+    "transform": "constant",
+    "constant_value": 2,
+    "fallback": null,
+    "critical": false,
+    "note": "1=Bull, 2=Base, 3=Bear — drives Scenario & Sensitivity tab"
+  },
+  "in_term_loan_open": {
+    "source_file": "financial-statements.json",
+    "json_path": "annual[-1].long_term_debt",
+    "transform": "identity",
+    "fallback": null,
+    "critical": false
+  },
+  "in_term_loan_rate": {
+    "source_file": "financial-statements.json",
+    "json_path": "annual[-1].interest_rate_implied",
+    "transform": "identity",
+    "fallback": "0.05",
+    "critical": false
+  },
+  "in_term_loan_amort": {
+    "source_file": "financial-statements.json",
+    "json_path": "annual[-1].debt_repayment",
+    "transform": "identity",
+    "fallback": null,
+    "critical": false
+  },
+  "in_revolver_rate": {
+    "source_file": null,
+    "json_path": null,
+    "transform": "constant",
+    "constant_value": 0.065,
+    "fallback": null,
+    "critical": false,
+    "note": "Default revolver rate; override if company discloses a specific rate"
+  },
+  "in_ppe_useful_life": {
+    "source_file": "financial-statements.json",
+    "json_path": "annual[-1].ppe_useful_life_years",
+    "transform": "identity",
+    "fallback": "10",
+    "critical": false
+  },
+  "in_min_cash": {
+    "source_file": "financial-statements.json",
+    "json_path": "annual[-1].minimum_cash_balance",
+    "transform": "identity",
+    "fallback": null,
+    "critical": false
+  }
+}

@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Dev-mode fallback when CLAUDE_PLUGIN_DATA is not set
+plugins/*/.data/
+
+# Filled Excel models written by openpyxl
+*.xlsx.lock
+~$*.xlsx

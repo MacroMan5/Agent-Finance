@@ -1,0 +1,8 @@
+{
+  "ticker": "AAPL",
+  "consensus": {
+    "revenue_growth_next_year": 0.072,
+    "eps_growth_next_year": 0.089,
+    "analyst_count": 42
+  }
+}

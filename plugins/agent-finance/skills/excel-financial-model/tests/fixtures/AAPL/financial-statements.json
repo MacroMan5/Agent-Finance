@@ -1,0 +1,45 @@
+{
+  "ticker": "AAPL",
+  "currency": "USD",
+  "annual": [
+    {
+      "fiscal_year": "FY2024",
+      "gross_margin": 0.461,
+      "sga_pct_revenue": 0.065,
+      "rd_pct_revenue": 0.079,
+      "effective_tax_rate": 0.241,
+      "dividend_payout_ratio": 0.155,
+      "long_term_debt": 101000000000,
+      "interest_rate_implied": 0.034,
+      "debt_repayment": 10000000000,
+      "ppe_useful_life_years": 8,
+      "minimum_cash_balance": 20000000000
+    },
+    {
+      "fiscal_year": "FY2023",
+      "gross_margin": 0.443,
+      "sga_pct_revenue": 0.068,
+      "rd_pct_revenue": 0.077,
+      "effective_tax_rate": 0.162,
+      "dividend_payout_ratio": 0.145,
+      "long_term_debt": 105000000000,
+      "interest_rate_implied": 0.031,
+      "debt_repayment": 11000000000,
+      "ppe_useful_life_years": 8,
+      "minimum_cash_balance": 20000000000
+    },
+    {
+      "fiscal_year": "FY2022",
+      "gross_margin": 0.434,
+      "sga_pct_revenue": 0.063,
+      "rd_pct_revenue": 0.072,
+      "effective_tax_rate": 0.162,
+      "dividend_payout_ratio": 0.143,
+      "long_term_debt": 110000000000,
+      "interest_rate_implied": 0.028,
+      "debt_repayment": 9500000000,
+      "ppe_useful_life_years": 9,
+      "minimum_cash_balance": 18000000000
+    }
+  ]
+}

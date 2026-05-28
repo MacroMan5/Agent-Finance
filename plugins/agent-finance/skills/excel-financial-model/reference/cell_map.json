@@ -1,0 +1,659 @@
+{
+  "chk_bs_balance": {
+    "named_range": "chk_bs_balance",
+    "sheet": "Checks",
+    "cell": "C6",
+    "kind": "check"
+  },
+  "chk_cf_tie": {
+    "named_range": "chk_cf_tie",
+    "sheet": "Checks",
+    "cell": "C7",
+    "kind": "check"
+  },
+  "chk_int_coverage": {
+    "named_range": "chk_int_coverage",
+    "sheet": "Checks",
+    "cell": "C10",
+    "kind": "check"
+  },
+  "chk_revolver_nonneg": {
+    "named_range": "chk_revolver_nonneg",
+    "sheet": "Checks",
+    "cell": "C11",
+    "kind": "check"
+  },
+  "chk_scenario_valid": {
+    "named_range": "chk_scenario_valid",
+    "sheet": "Checks",
+    "cell": "C12",
+    "kind": "check"
+  },
+  "chk_tv_pct": {
+    "named_range": "chk_tv_pct",
+    "sheet": "Checks",
+    "cell": "C9",
+    "kind": "check"
+  },
+  "chk_wacc_gt_g": {
+    "named_range": "chk_wacc_gt_g",
+    "sheet": "Checks",
+    "cell": "C8",
+    "kind": "check"
+  },
+  "in_beta_base": {
+    "named_range": "in_beta_base",
+    "sheet": "Assumptions",
+    "cell": "D65",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "base",
+    "metric": "beta",
+    "units": "ratio"
+  },
+  "in_beta_bear": {
+    "named_range": "in_beta_bear",
+    "sheet": "Assumptions",
+    "cell": "E65",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "bear",
+    "metric": "beta",
+    "units": "ratio"
+  },
+  "in_beta_bull": {
+    "named_range": "in_beta_bull",
+    "sheet": "Assumptions",
+    "cell": "C65",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "bull",
+    "metric": "beta",
+    "units": "ratio"
+  },
+  "in_erp_base": {
+    "named_range": "in_erp_base",
+    "sheet": "Assumptions",
+    "cell": "D64",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "base",
+    "metric": "erp",
+    "units": "pct"
+  },
+  "in_erp_bear": {
+    "named_range": "in_erp_bear",
+    "sheet": "Assumptions",
+    "cell": "E64",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "bear",
+    "metric": "erp",
+    "units": "pct"
+  },
+  "in_erp_bull": {
+    "named_range": "in_erp_bull",
+    "sheet": "Assumptions",
+    "cell": "C64",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "bull",
+    "metric": "erp",
+    "units": "pct"
+  },
+  "in_exit_mult_base": {
+    "named_range": "in_exit_mult_base",
+    "sheet": "Assumptions",
+    "cell": "D66",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "base",
+    "metric": "exit_mult",
+    "units": "x"
+  },
+  "in_exit_mult_bear": {
+    "named_range": "in_exit_mult_bear",
+    "sheet": "Assumptions",
+    "cell": "E66",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "bear",
+    "metric": "exit_mult",
+    "units": "x"
+  },
+  "in_exit_mult_bull": {
+    "named_range": "in_exit_mult_bull",
+    "sheet": "Assumptions",
+    "cell": "C66",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "bull",
+    "metric": "exit_mult",
+    "units": "x"
+  },
+  "in_gross_margin_base": {
+    "named_range": "in_gross_margin_base",
+    "sheet": "Assumptions",
+    "cell": "C22",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "base",
+    "metric": "gross_margin",
+    "units": "pct"
+  },
+  "in_gross_margin_bear": {
+    "named_range": "in_gross_margin_bear",
+    "sheet": "Assumptions",
+    "cell": "C23",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "bear",
+    "metric": "gross_margin",
+    "units": "pct"
+  },
+  "in_gross_margin_bull": {
+    "named_range": "in_gross_margin_bull",
+    "sheet": "Assumptions",
+    "cell": "C21",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "bull",
+    "metric": "gross_margin",
+    "units": "pct"
+  },
+  "in_min_cash": {
+    "named_range": "in_min_cash",
+    "sheet": "Debt Schedule",
+    "cell": "C10",
+    "kind": "input",
+    "fill_strategy": "direct",
+    "metric": "min_cash",
+    "units": "usd"
+  },
+  "in_payout_base": {
+    "named_range": "in_payout_base",
+    "sheet": "Assumptions",
+    "cell": "C46",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "base",
+    "metric": "payout",
+    "units": "pct"
+  },
+  "in_payout_bear": {
+    "named_range": "in_payout_bear",
+    "sheet": "Assumptions",
+    "cell": "C47",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "bear",
+    "metric": "payout",
+    "units": "pct"
+  },
+  "in_payout_bull": {
+    "named_range": "in_payout_bull",
+    "sheet": "Assumptions",
+    "cell": "C45",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "bull",
+    "metric": "payout",
+    "units": "pct"
+  },
+  "in_ppe_useful_life": {
+    "named_range": "in_ppe_useful_life",
+    "sheet": "PP&E Schedule",
+    "cell": "C11",
+    "kind": "input",
+    "fill_strategy": "direct",
+    "metric": "ppe_useful_life",
+    "units": "years"
+  },
+  "in_rev_growth_base": {
+    "named_range": "in_rev_growth_base",
+    "sheet": "Assumptions",
+    "cell": "C16",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "base",
+    "metric": "rev_growth",
+    "units": "pct"
+  },
+  "in_rev_growth_bear": {
+    "named_range": "in_rev_growth_bear",
+    "sheet": "Assumptions",
+    "cell": "C17",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "bear",
+    "metric": "rev_growth",
+    "units": "pct"
+  },
+  "in_rev_growth_bull": {
+    "named_range": "in_rev_growth_bull",
+    "sheet": "Assumptions",
+    "cell": "C15",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "bull",
+    "metric": "rev_growth",
+    "units": "pct"
+  },
+  "in_revolver_rate": {
+    "named_range": "in_revolver_rate",
+    "sheet": "Debt Schedule",
+    "cell": "C9",
+    "kind": "input",
+    "fill_strategy": "direct",
+    "metric": "revolver_rate",
+    "units": "pct"
+  },
+  "in_rnd_pct_base": {
+    "named_range": "in_rnd_pct_base",
+    "sheet": "Assumptions",
+    "cell": "C34",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "base",
+    "metric": "rnd_pct",
+    "units": "pct"
+  },
+  "in_rnd_pct_bear": {
+    "named_range": "in_rnd_pct_bear",
+    "sheet": "Assumptions",
+    "cell": "C35",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "bear",
+    "metric": "rnd_pct",
+    "units": "pct"
+  },
+  "in_rnd_pct_bull": {
+    "named_range": "in_rnd_pct_bull",
+    "sheet": "Assumptions",
+    "cell": "C33",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "bull",
+    "metric": "rnd_pct",
+    "units": "pct"
+  },
+  "in_scenario": {
+    "named_range": "in_scenario",
+    "sheet": "Assumptions",
+    "cell": "C9",
+    "kind": "input",
+    "fill_strategy": "direct",
+    "metric": "scenario",
+    "units": "value"
+  },
+  "in_sga_pct_base": {
+    "named_range": "in_sga_pct_base",
+    "sheet": "Assumptions",
+    "cell": "C28",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "base",
+    "metric": "sga_pct",
+    "units": "pct"
+  },
+  "in_sga_pct_bear": {
+    "named_range": "in_sga_pct_bear",
+    "sheet": "Assumptions",
+    "cell": "C29",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "bear",
+    "metric": "sga_pct",
+    "units": "pct"
+  },
+  "in_sga_pct_bull": {
+    "named_range": "in_sga_pct_bull",
+    "sheet": "Assumptions",
+    "cell": "C27",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "bull",
+    "metric": "sga_pct",
+    "units": "pct"
+  },
+  "in_tax_rate_base": {
+    "named_range": "in_tax_rate_base",
+    "sheet": "Assumptions",
+    "cell": "C40",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "base",
+    "metric": "tax_rate",
+    "units": "pct"
+  },
+  "in_tax_rate_bear": {
+    "named_range": "in_tax_rate_bear",
+    "sheet": "Assumptions",
+    "cell": "C41",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "bear",
+    "metric": "tax_rate",
+    "units": "pct"
+  },
+  "in_tax_rate_bull": {
+    "named_range": "in_tax_rate_bull",
+    "sheet": "Assumptions",
+    "cell": "C39",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "bull",
+    "metric": "tax_rate",
+    "units": "pct"
+  },
+  "in_term_loan_amort": {
+    "named_range": "in_term_loan_amort",
+    "sheet": "Debt Schedule",
+    "cell": "C7",
+    "kind": "input",
+    "fill_strategy": "direct",
+    "metric": "term_loan_amort",
+    "units": "usd"
+  },
+  "in_term_loan_open": {
+    "named_range": "in_term_loan_open",
+    "sheet": "Debt Schedule",
+    "cell": "C6",
+    "kind": "input",
+    "fill_strategy": "direct",
+    "metric": "term_loan_open",
+    "units": "usd"
+  },
+  "in_term_loan_rate": {
+    "named_range": "in_term_loan_rate",
+    "sheet": "Debt Schedule",
+    "cell": "C8",
+    "kind": "input",
+    "fill_strategy": "direct",
+    "metric": "term_loan_rate",
+    "units": "pct"
+  },
+  "in_tgr_base": {
+    "named_range": "in_tgr_base",
+    "sheet": "Assumptions",
+    "cell": "D63",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "base",
+    "metric": "tgr",
+    "units": "pct"
+  },
+  "in_tgr_bear": {
+    "named_range": "in_tgr_bear",
+    "sheet": "Assumptions",
+    "cell": "E63",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "bear",
+    "metric": "tgr",
+    "units": "pct"
+  },
+  "in_tgr_bull": {
+    "named_range": "in_tgr_bull",
+    "sheet": "Assumptions",
+    "cell": "C63",
+    "kind": "input",
+    "fill_strategy": "mcp_or_delta",
+    "scenario": "bull",
+    "metric": "tgr",
+    "units": "pct"
+  },
+  "out_comps_avg_vps": {
+    "named_range": "out_comps_avg_vps",
+    "sheet": "Comps",
+    "cell": "E17",
+    "kind": "output"
+  },
+  "out_enterprise_value": {
+    "named_range": "out_enterprise_value",
+    "sheet": "DCF",
+    "cell": "C31",
+    "kind": "output"
+  },
+  "out_equity_value": {
+    "named_range": "out_equity_value",
+    "sheet": "DCF",
+    "cell": "C33",
+    "kind": "output"
+  },
+  "out_tv_pct_ev": {
+    "named_range": "out_tv_pct_ev",
+    "sheet": "DCF",
+    "cell": "C38",
+    "kind": "output"
+  },
+  "out_upside": {
+    "named_range": "out_upside",
+    "sheet": "DCF",
+    "cell": "C37",
+    "kind": "output"
+  },
+  "out_value_per_share": {
+    "named_range": "out_value_per_share",
+    "sheet": "DCF",
+    "cell": "C35",
+    "kind": "output"
+  },
+  "out_wacc": {
+    "named_range": "out_wacc",
+    "sheet": "DCF",
+    "cell": "C10",
+    "kind": "output"
+  },
+  "rng_beta_active": {
+    "named_range": "rng_beta_active",
+    "sheet": "Assumptions",
+    "cell": "F65",
+    "kind": "range"
+  },
+  "rng_capex_pct_active": {
+    "named_range": "rng_capex_pct_active",
+    "sheet": "Assumptions",
+    "cell": "C59",
+    "kind": "range"
+  },
+  "rng_capex_pct_active_row": {
+    "named_range": "rng_capex_pct_active_row",
+    "sheet": "Assumptions",
+    "cell": "C59:J59",
+    "kind": "active_row"
+  },
+  "rng_cash_latest": {
+    "named_range": "rng_cash_latest",
+    "sheet": "Assumptions",
+    "cell": "C78",
+    "kind": "range"
+  },
+  "rng_circular": {
+    "named_range": "rng_circular",
+    "sheet": "Assumptions",
+    "cell": "C73",
+    "kind": "range"
+  },
+  "rng_cur_price": {
+    "named_range": "rng_cur_price",
+    "sheet": "Assumptions",
+    "cell": "C77",
+    "kind": "range"
+  },
+  "rng_da_pct": {
+    "named_range": "rng_da_pct",
+    "sheet": "Assumptions",
+    "cell": "C54",
+    "kind": "range"
+  },
+  "rng_da_pct_row": {
+    "named_range": "rng_da_pct_row",
+    "sheet": "Assumptions",
+    "cell": "C54:J54",
+    "kind": "active_row"
+  },
+  "rng_debt_wt": {
+    "named_range": "rng_debt_wt",
+    "sheet": "Assumptions",
+    "cell": "C71",
+    "kind": "range"
+  },
+  "rng_dio": {
+    "named_range": "rng_dio",
+    "sheet": "Assumptions",
+    "cell": "C52",
+    "kind": "range"
+  },
+  "rng_dio_row": {
+    "named_range": "rng_dio_row",
+    "sheet": "Assumptions",
+    "cell": "C52:J52",
+    "kind": "active_row"
+  },
+  "rng_dpo": {
+    "named_range": "rng_dpo",
+    "sheet": "Assumptions",
+    "cell": "C53",
+    "kind": "range"
+  },
+  "rng_dpo_row": {
+    "named_range": "rng_dpo_row",
+    "sheet": "Assumptions",
+    "cell": "C53:J53",
+    "kind": "active_row"
+  },
+  "rng_dso": {
+    "named_range": "rng_dso",
+    "sheet": "Assumptions",
+    "cell": "C51",
+    "kind": "range"
+  },
+  "rng_dso_row": {
+    "named_range": "rng_dso_row",
+    "sheet": "Assumptions",
+    "cell": "C51:J51",
+    "kind": "active_row"
+  },
+  "rng_erp_active": {
+    "named_range": "rng_erp_active",
+    "sheet": "Assumptions",
+    "cell": "F64",
+    "kind": "range"
+  },
+  "rng_exit_mult_active": {
+    "named_range": "rng_exit_mult_active",
+    "sheet": "Assumptions",
+    "cell": "F66",
+    "kind": "range"
+  },
+  "rng_gross_margin_active": {
+    "named_range": "rng_gross_margin_active",
+    "sheet": "Assumptions",
+    "cell": "C24",
+    "kind": "range"
+  },
+  "rng_gross_margin_active_row": {
+    "named_range": "rng_gross_margin_active_row",
+    "sheet": "Assumptions",
+    "cell": "C24:J24",
+    "kind": "active_row"
+  },
+  "rng_kd": {
+    "named_range": "rng_kd",
+    "sheet": "Assumptions",
+    "cell": "C70",
+    "kind": "range"
+  },
+  "rng_midyear": {
+    "named_range": "rng_midyear",
+    "sheet": "Assumptions",
+    "cell": "C72",
+    "kind": "range"
+  },
+  "rng_payout_active": {
+    "named_range": "rng_payout_active",
+    "sheet": "Assumptions",
+    "cell": "C48",
+    "kind": "range"
+  },
+  "rng_payout_active_row": {
+    "named_range": "rng_payout_active_row",
+    "sheet": "Assumptions",
+    "cell": "C48:J48",
+    "kind": "active_row"
+  },
+  "rng_rev_growth_active": {
+    "named_range": "rng_rev_growth_active",
+    "sheet": "Assumptions",
+    "cell": "C18",
+    "kind": "range"
+  },
+  "rng_rev_growth_active_row": {
+    "named_range": "rng_rev_growth_active_row",
+    "sheet": "Assumptions",
+    "cell": "C18:J18",
+    "kind": "active_row"
+  },
+  "rng_rev_hist_row": {
+    "named_range": "rng_rev_hist_row",
+    "sheet": "Assumptions",
+    "cell": "C79:E79",
+    "kind": "active_row"
+  },
+  "rng_rf": {
+    "named_range": "rng_rf",
+    "sheet": "Assumptions",
+    "cell": "C69",
+    "kind": "range"
+  },
+  "rng_rnd_pct_active": {
+    "named_range": "rng_rnd_pct_active",
+    "sheet": "Assumptions",
+    "cell": "C36",
+    "kind": "range"
+  },
+  "rng_rnd_pct_active_row": {
+    "named_range": "rng_rnd_pct_active_row",
+    "sheet": "Assumptions",
+    "cell": "C36:J36",
+    "kind": "active_row"
+  },
+  "rng_sga_pct_active": {
+    "named_range": "rng_sga_pct_active",
+    "sheet": "Assumptions",
+    "cell": "C30",
+    "kind": "range"
+  },
+  "rng_sga_pct_active_row": {
+    "named_range": "rng_sga_pct_active_row",
+    "sheet": "Assumptions",
+    "cell": "C30:J30",
+    "kind": "active_row"
+  },
+  "rng_shares": {
+    "named_range": "rng_shares",
+    "sheet": "Assumptions",
+    "cell": "C76",
+    "kind": "range"
+  },
+  "rng_tax_rate_active": {
+    "named_range": "rng_tax_rate_active",
+    "sheet": "Assumptions",
+    "cell": "C42",
+    "kind": "range"
+  },
+  "rng_tax_rate_active_row": {
+    "named_range": "rng_tax_rate_active_row",
+    "sheet": "Assumptions",
+    "cell": "C42:J42",
+    "kind": "active_row"
+  },
+  "rng_tgr_active": {
+    "named_range": "rng_tgr_active",
+    "sheet": "Assumptions",
+    "cell": "F63",
+    "kind": "range"
+  }
+}

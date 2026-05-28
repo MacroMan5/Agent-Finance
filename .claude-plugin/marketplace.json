@@ -1,0 +1,14 @@
+{
+  "name": "agent-finance-marketplace",
+  "owner": { "name": "Emile Théroux" },
+  "description": "Market-finance research plugins for Claude Code.",
+  "plugins": [
+    {
+      "name": "agent-finance",
+      "source": "./plugins/agent-finance",
+      "description": "Decision-support research harness for public-equity analysis: 13 skills, 3 agents, Financial Datasets MCP, 3-statement Excel models with DCF.",
+      "version": "0.1.0",
+      "keywords": ["finance", "research", "valuation", "dcf", "equity"]
+    }
+  ]
+}
