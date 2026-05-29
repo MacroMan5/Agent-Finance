@@ -37,6 +37,20 @@ TEMPLATE_PATH = SKILL_DIR / "template" / "model_template.xlsx"
 CELL_MAP_PATH = SKILL_DIR / "reference" / "cell_map.json"
 OUTPUT_DIR = PROJECT_DIR / "output" / "agent-finance" / "models"
 
+# Comps sheet layout — peer rows and column indices for _fill_comps.
+# Centralised here so any template restructure requires one edit, not a grep.
+COMPS_LAYOUT = {
+    "first_peer_row": 7,
+    "max_peers": 4,
+    "col_name": 2,
+    "col_ev_sales": 3,
+    "col_ev_ebitda": 4,
+    "col_pe": 5,
+    "col_p_fcf": 6,
+    "col_source": 7,
+    "median_row": 11,
+}
+
 
 def _load_cell_map() -> dict[str, dict]:
     with CELL_MAP_PATH.open(encoding="utf-8") as f:
@@ -156,23 +170,24 @@ def _fill_comps(wb, peers: list | None, source: str | None) -> int:
     """Write peer rows into the Comps sheet.
 
     peers: list of dicts with keys: name, ev_sales, ev_ebitda, pe, p_fcf
-    Rows 7-10 (up to 4 peers). Median row 11 stays as formula.
-    Returns count of cells written.
+    Layout governed by COMPS_LAYOUT. Returns count of cells written.
     """
     if not peers:
         return 0
     ws = wb["Comps"]
     written = 0
-    for i, peer in enumerate(peers[:4]):
-        row = 7 + i
-        ws.cell(row, 2).value = peer.get("name", f"Peer {i+1}")
-        ws.cell(row, 3).value = peer.get("ev_sales")
-        ws.cell(row, 4).value = peer.get("ev_ebitda")
-        ws.cell(row, 5).value = peer.get("pe")
-        ws.cell(row, 6).value = peer.get("p_fcf")
-        ws.cell(row, 7).value = source or peer.get("source", "")
+    first_row = COMPS_LAYOUT["first_peer_row"]
+    max_peers = COMPS_LAYOUT["max_peers"]
+    for i, peer in enumerate(peers[:max_peers]):
+        row = first_row + i
+        ws.cell(row, COMPS_LAYOUT["col_name"]).value = peer.get("name", f"Peer {i+1}")
+        ws.cell(row, COMPS_LAYOUT["col_ev_sales"]).value = peer.get("ev_sales")
+        ws.cell(row, COMPS_LAYOUT["col_ev_ebitda"]).value = peer.get("ev_ebitda")
+        ws.cell(row, COMPS_LAYOUT["col_pe"]).value = peer.get("pe")
+        ws.cell(row, COMPS_LAYOUT["col_p_fcf"]).value = peer.get("p_fcf")
+        ws.cell(row, COMPS_LAYOUT["col_source"]).value = source or peer.get("source", "")
         written += 5
-    ws.cell(11, 2).value = "Peer Median (excl. subject)"
+    ws.cell(COMPS_LAYOUT["median_row"], COMPS_LAYOUT["col_name"]).value = "Peer Median (excl. subject)"
     return written
 
 

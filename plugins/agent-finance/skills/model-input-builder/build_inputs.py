@@ -165,6 +165,7 @@ def build_inputs(ticker: str, cache_dir_override: str | None = None, output_dir_
         cache_data = caches.get(src_file)
         raw = None
 
+        used_fallback_key: str | None = None
         if cache_data is not None:
             raw = _resolve_path(cache_data, mapping["json_path"])
             # Try json_path_fallbacks if primary path returned nothing.
@@ -172,6 +173,7 @@ def build_inputs(ticker: str, cache_dir_override: str | None = None, output_dir_
                 for alt_path in mapping.get("json_path_fallbacks", []):
                     raw = _resolve_path(cache_data, alt_path)
                     if raw is not None:
+                        used_fallback_key = alt_path
                         break
 
         # Try fallback if primary path failed.
@@ -196,10 +198,13 @@ def build_inputs(ticker: str, cache_dir_override: str | None = None, output_dir_
         else:
             transformed = _apply_transform(raw, mapping.get("transform", "identity"))
             base_values[name] = transformed
-            base_sources[name] = (
+            source_str = (
                 f"financial-datasets:{src_file.replace('.json','')} "
                 f"ticker={ticker.upper()} as-of={RUN_DATE or 'latest'}"
             )
+            if used_fallback_key and mapping.get("fallback_currency_warning"):
+                source_str += f" | WARNING: {mapping['fallback_currency_warning']}"
+            base_sources[name] = source_str
 
     # --- Derive bull/bear from base ---
     values: dict[str, Any] = {}

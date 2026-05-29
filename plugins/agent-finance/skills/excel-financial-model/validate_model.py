@@ -61,18 +61,13 @@ CRITICAL_INPUTS = {
     "in_rev_hist_fy1", "in_rev_hist_fy2", "in_rev_hist_fy3",
 }
 
-# Cells that must not contain the text sentinel "MISSING" after pipeline fill.
-# These map logical names to their Assumptions-sheet coordinates.
-SENTINEL_CELLS = {
-    "in_shares_outstanding": ("Assumptions", "C76"),
-    "in_cur_price":          ("Assumptions", "C77"),
-    "in_cash_latest":        ("Assumptions", "C78"),
-    "in_rev_hist_fy1":       ("Assumptions", "C79"),
-    "in_rev_hist_fy2":       ("Assumptions", "D79"),
-    "in_rev_hist_fy3":       ("Assumptions", "E79"),
-    "in_cogs_hist_fy1":      ("Assumptions", "C80"),
-    "in_cogs_hist_fy2":      ("Assumptions", "D80"),
-    "in_cogs_hist_fy3":      ("Assumptions", "E80"),
+# Cells that must not remain MISSING after pipeline fill.
+# Derived from cell_map.json at import time — no second source of truth.
+_CELL_MAP_RAW: dict = json.loads(CELL_MAP_PATH.read_text(encoding="utf-8")) if CELL_MAP_PATH.exists() else {}
+SENTINEL_CELLS: dict[str, tuple[str, str]] = {
+    name: (entry["sheet"], entry["cell"])
+    for name, entry in _CELL_MAP_RAW.items()
+    if entry.get("kind") == "input" and name in CRITICAL_INPUTS
 }
 
 # v2 template built-in check cells (read from Checks sheet via cell_map).
@@ -294,80 +289,92 @@ def validate(model_path: Path) -> dict:
     # Scan all input cells (any sheet) for MISSING: annotations in column L.
     missing_check = {"passed": True, "details": []}
     wb_src = load_workbook(model_path)
-    for logical, entry in cell_map.items():
-        if entry["kind"] != "input" or logical not in CRITICAL_INPUTS:
-            continue
-        if entry["sheet"] not in wb_src.sheetnames:
-            continue
-        ws_src = wb_src[entry["sheet"]]
-        row_num = int("".join(ch for ch in entry["cell"] if ch.isdigit()))
-        src_cell = ws_src.cell(row=row_num, column=12).value
-        if isinstance(src_cell, str) and src_cell.startswith("MISSING:"):
-            missing_check["passed"] = False
-            missing_check["details"].append({
-                "logical_name": logical,
-                "row": row_num,
-                "sheet": entry["sheet"],
-                "reason": src_cell,
-            })
-    report["checks"]["8_missing_critical_inputs"] = missing_check
-
-    # --- 9. Scenario coverage -------------------------------------------------
-    # For every metric that has a bull/base/bear triplet, either all three must
-    # be filled (non-MISSING, numeric cell value present) or none of them.
-    scen_check = {"passed": True, "details": []}
-    from collections import defaultdict
-    metric_scenarios: dict[str, dict[str, str]] = defaultdict(dict)
-    for logical, entry in cell_map.items():
-        if entry["kind"] != "input" or "scenario" not in entry:
-            continue
-        metric = entry.get("metric", "")
-        scenario = entry["scenario"]
-        metric_scenarios[metric][scenario] = logical
-
-    for metric, scen_map in metric_scenarios.items():
-        if set(scen_map.keys()) != {"bull", "base", "bear"}:
-            continue
-        fill_statuses = {}
-        for scen, logical in scen_map.items():
-            entry = cell_map[logical]
-            if entry["sheet"] not in wb_src.sheetnames:
-                fill_statuses[scen] = False
+    try:
+        for logical, entry in cell_map.items():
+            if entry["kind"] != "input" or logical not in CRITICAL_INPUTS:
                 continue
-            ws_scen = wb_src[entry["sheet"]]
+            if entry["sheet"] not in wb_src.sheetnames:
+                continue
+            ws_src = wb_src[entry["sheet"]]
             row_num = int("".join(ch for ch in entry["cell"] if ch.isdigit()))
-            col_letter = "".join(ch for ch in entry["cell"] if ch.isalpha())
-            val = ws_scen[f"{col_letter}{row_num}"].value
-            src = ws_scen.cell(row=row_num, column=12).value
-            is_missing = isinstance(src, str) and src.startswith("MISSING:")
-            is_filled = isinstance(val, (int, float)) and not is_missing
-            fill_statuses[scen] = is_filled
-        if len(set(fill_statuses.values())) > 1:
-            scen_check["passed"] = False
-            scen_check["details"].append({
-                "metric": metric,
-                "fill_status": fill_statuses,
-            })
-    report["checks"]["9_scenario_coverage"] = scen_check
+            src_cell = ws_src.cell(row=row_num, column=12).value
+            if isinstance(src_cell, str) and src_cell.startswith("MISSING:"):
+                missing_check["passed"] = False
+                missing_check["details"].append({
+                    "logical_name": logical,
+                    "row": row_num,
+                    "sheet": entry["sheet"],
+                    "reason": src_cell,
+                })
+        report["checks"]["8_missing_critical_inputs"] = missing_check
+
+        # --- 9. Scenario coverage -------------------------------------------------
+        # For every metric that has a bull/base/bear triplet, either all three must
+        # be filled (non-MISSING, numeric cell value present) or none of them.
+        scen_check = {"passed": True, "details": []}
+        from collections import defaultdict
+        metric_scenarios: dict[str, dict[str, str]] = defaultdict(dict)
+        for logical, entry in cell_map.items():
+            if entry["kind"] != "input" or "scenario" not in entry:
+                continue
+            metric = entry.get("metric", "")
+            scenario = entry["scenario"]
+            metric_scenarios[metric][scenario] = logical
+
+        for metric, scen_map in metric_scenarios.items():
+            if set(scen_map.keys()) != {"bull", "base", "bear"}:
+                continue
+            fill_statuses = {}
+            for scen, logical in scen_map.items():
+                entry = cell_map[logical]
+                if entry["sheet"] not in wb_src.sheetnames:
+                    fill_statuses[scen] = False
+                    continue
+                ws_scen = wb_src[entry["sheet"]]
+                row_num = int("".join(ch for ch in entry["cell"] if ch.isdigit()))
+                col_letter = "".join(ch for ch in entry["cell"] if ch.isalpha())
+                val = ws_scen[f"{col_letter}{row_num}"].value
+                src = ws_scen.cell(row=row_num, column=12).value
+                is_missing = isinstance(src, str) and src.startswith("MISSING:")
+                is_filled = isinstance(val, (int, float)) and not is_missing
+                fill_statuses[scen] = is_filled
+            if len(set(fill_statuses.values())) > 1:
+                scen_check["passed"] = False
+                scen_check["details"].append({
+                    "metric": metric,
+                    "fill_status": fill_statuses,
+                })
+        report["checks"]["9_scenario_coverage"] = scen_check
+    finally:
+        wb_src.close()
 
     # --- 10. Sentinel text detector ------------------------------------------
-    # Cells that should be filled by the pipeline must not still contain the
-    # text "MISSING" written by the template (as opposed to a numeric value).
-    # Reading raw (data_only=False) catches string sentinels regardless of
-    # whether Excel has recalculated the workbook.
+    # Cells in SENTINEL_CELLS must not remain unfilled after the pipeline runs.
+    # fill_model.py erases any template sentinel (sets cell to None) and writes
+    # "MISSING: <reason>" to col L — so we check both the data cell (old-style
+    # text sentinel) and col L (pipeline-style MISSING annotation).
     sentinel_check = {"passed": True, "details": []}
     wb_raw = load_workbook(model_path, data_only=False)
-    for logical, (sheet_name, cell_addr) in SENTINEL_CELLS.items():
-        if sheet_name not in wb_raw.sheetnames:
-            continue
-        val = wb_raw[sheet_name][cell_addr].value
-        if isinstance(val, str) and val.strip().upper() == "MISSING":
-            sentinel_check["passed"] = False
-            sentinel_check["details"].append({
-                "logical_name": logical,
-                "cell": f"{sheet_name}!{cell_addr}",
-                "error": f"Template placeholder not overwritten: {cell_addr} still reads 'MISSING'",
-            })
+    try:
+        for logical, (sheet_name, cell_addr) in SENTINEL_CELLS.items():
+            if sheet_name not in wb_raw.sheetnames:
+                continue
+            ws = wb_raw[sheet_name]
+            val = ws[cell_addr].value
+            row_num = int("".join(ch for ch in cell_addr if ch.isdigit()))
+            src_val = ws.cell(row=row_num, column=12).value
+            text_sentinel = isinstance(val, str) and val.strip().upper() == "MISSING"
+            col_l_missing = val is None and isinstance(src_val, str) and src_val.startswith("MISSING:")
+            if text_sentinel or col_l_missing:
+                reason = src_val if col_l_missing else f"{cell_addr} still reads 'MISSING'"
+                sentinel_check["passed"] = False
+                sentinel_check["details"].append({
+                    "logical_name": logical,
+                    "cell": f"{sheet_name}!{cell_addr}",
+                    "error": reason,
+                })
+    finally:
+        wb_raw.close()
     report["checks"]["10_sentinel_placeholder_check"] = sentinel_check
 
     # --- aggregate -----------------------------------------------------------

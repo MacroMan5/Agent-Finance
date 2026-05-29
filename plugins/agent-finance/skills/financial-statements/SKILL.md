@@ -33,6 +33,13 @@ ratios. Output a clean, normalized dataset for downstream skills.
    - `FCF = CFO - CapEx` (annual & TTM).
    - `Working capital = Current assets - Current liabilities`; track delta.
    - `Gross / operating / net margin` per period.
+   - `FCF yield = FCF / market cap` (annual & TTM) — requires current price
+     from `valuation-multiples` if available; mark `null` with gap reason if
+     not yet pulled.
+   - `Maintenance capex vs growth capex` — split where disclosed in MD&A or
+     footnotes. If not explicitly disclosed, derive: maintenance capex ≈
+     depreciation × (1 + inflation); growth capex = total capex − maintenance.
+     Label the split as `assumption:` when derived, `filing:` when disclosed.
 4. **Flag one-offs.** Any line with `restructuring`, `impairment`,
    `goodwill write-down`, `litigation settlement` — itemize.
 
@@ -56,7 +63,9 @@ JSON at `${CLAUDE_PLUGIN_DATA}/companies/<TICKER>/financial-statements.json`:
   "ratios": {
     "net_debt_to_ebitda": [{"period": "FY24", "value": 1.2, "source": "..."}],
     "interest_coverage": [...],
-    "fcf_margin_pct": [...]
+    "fcf_margin_pct": [...],
+    "fcf_yield_pct": [{"period": "TTM", "value": 3.1, "source": "..."}],
+    "capex_split": [{"period": "FY25", "total": 0, "maintenance": 0, "growth": 0, "method": "disclosed | derived", "source": "..."}]
   },
   "one_offs": [{"period": "FY24", "type": "impairment", "amount": ..., "source": "..."}]
 }

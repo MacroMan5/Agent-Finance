@@ -44,6 +44,16 @@ subagent.
    - `insider-institutional`
    - `macro-context`
    - `bull-bear-thesis`
+
+   **Conditional skills** — invoke after `fundamental-research` if triggered:
+   - `unit-economics-retail` — auto-trigger when `company-profile.sector`
+     contains "Consumer Discretionary" or "Consumer Staples" and
+     `store_count > 0`. Feeds `in_rev_growth_*` and `in_capex_pct_*`
+     calibration in `model-input-builder`.
+   - `subsidiary-valuation` — auto-trigger when any subsidiary contributes
+     ≥ 15% of consolidated net income OR ≥ 10% of consolidated revenue.
+     Feeds `bull-bear-thesis` (optionality pillar) and `verdict-report`
+     (SOTP alongside DCF).
 3. **Cache aggressively.** Every raw API response, every fetched filing, every
    transcript goes under `${CLAUDE_PLUGIN_DATA}/companies/{{TICKER}}/raw/`
    with the filename pattern `<source>_<doc-type>_<as-of-date>.<ext>`.

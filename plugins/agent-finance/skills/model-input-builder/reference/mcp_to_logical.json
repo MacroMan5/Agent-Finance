@@ -134,6 +134,7 @@
     "json_path": "stock_price_cad",
     "json_path_fallbacks": ["stock_price_usd", "stock_price"],
     "transform": "identity",
+    "fallback_currency_warning": "stock_price_usd fallback used — value is in USD; verify FX conversion before using in a CAD-denominated model (CLAUDE.md rule #7)",
     "fallback": null,
     "critical": true
   },

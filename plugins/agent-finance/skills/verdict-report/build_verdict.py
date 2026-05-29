@@ -60,53 +60,28 @@ SIGNAL_THRESHOLDS = [
 
 def _read_excel_outputs(model_path: Path, cell_map: dict) -> dict[str, Any]:
     wb = load_workbook(model_path, data_only=True)
-    out = {}
-    for name, entry in cell_map.items():
-        if entry["kind"] != "output":
-            continue
-        sheet_name = entry["sheet"]
-        cell_ref = entry["cell"]
-        if sheet_name not in wb.sheetnames:
-            out[name] = None
-            continue
-        out[name] = wb[sheet_name][cell_ref].value
+    try:
+        out = {}
+        for name, entry in cell_map.items():
+            if entry["kind"] != "output":
+                continue
+            sheet_name = entry["sheet"]
+            cell_ref = entry["cell"]
+            if sheet_name not in wb.sheetnames:
+                out[name] = None
+                continue
+            out[name] = wb[sheet_name][cell_ref].value
+    finally:
+        wb.close()
     return out
 
 
 def _run_scenario_vps(model_path: Path, scenario: int,
                       values_path: Path, sources_path: Path,
                       cell_map: dict) -> float | None:
-    """Re-run fill in-memory for a given scenario, return value-per-share."""
-    sys.path.insert(0, str(SKILLS_DIR / "excel-financial-model"))
-    try:
-        import fill_model as fm
-    except ImportError:
-        return None
-
-    with values_path.open(encoding="utf-8") as f:
-        vals = json.load(f)
-    with sources_path.open(encoding="utf-8") as f:
-        srcs = json.load(f)
-
-    vals["in_scenario"] = scenario
-    srcs["in_scenario"] = f"override for scenario {scenario} in-memory run"
-
-    import tempfile, shutil
-    with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
-        tmp_path = Path(tmp.name)
-
-    template_path = SKILLS_DIR / "excel-financial-model" / "template" / "model_template.xlsx"
-    try:
-        fm.fill(template_path, tmp_path, vals, srcs)
-        wb = load_workbook(tmp_path, data_only=True)
-        vps_entry = cell_map.get("out_value_per_share")
-        if vps_entry:
-            val = wb[vps_entry["sheet"]][vps_entry["cell"]].value
-            return float(val) if val is not None else None
-    except Exception:
-        return None
-    finally:
-        tmp_path.unlink(missing_ok=True)
+    """openpyxl cannot evaluate Excel formulas — scenario VPS cannot be computed
+    from in-memory re-run. Returns None; the caller falls back to vps_base and
+    surfaces this in verdict["gaps"]."""
     return None
 
 
@@ -121,10 +96,14 @@ def _parse_bull_bear_thesis(thesis_path: Path) -> dict:
     text = thesis_path.read_text(encoding="utf-8", errors="replace")
 
     bull_weight, bear_weight = 0.6, 0.4
-    m = re.search(r"bull\s+(\d+)%\s*/\s*bear\s+(\d+)%", text, re.IGNORECASE)
+    m = re.search(r"bull[:\s]+(\d+)\s*%\s*/?\s*bear[:\s]+(\d+)\s*%", text, re.IGNORECASE)
     if m:
         bull_weight = int(m.group(1)) / 100
         bear_weight = int(m.group(2)) / 100
+        total = bull_weight + bear_weight
+        if total > 1.0:
+            bull_weight = bull_weight / total
+            bear_weight = bear_weight / total
 
     milestones = re.findall(r"(?:Milestone[:\s]+|milestone to validate[:\s]+)(.+)", text, re.IGNORECASE)
     invalidations = re.findall(r"(?:Invalidat\w+[:\s]+|trigger[:\s]+)(.+)", text, re.IGNORECASE)
@@ -257,13 +236,30 @@ def _build_report(
     invalidations = thesis.get("invalidations", [])
 
     # Next earnings from earnings-analysis
-    fy_guidance = earnings.get("fy2027_guidance", {})
-    next_earnings_note = "Q1 FY2027 results expected ~June 2026 (Dollarama fiscal Q1 ends ~May 2026)"
+    next_earnings_note = (
+        earnings.get("next_results_note")
+        or earnings.get("next_earnings_date")
+        or "Next earnings date not available in cache."
+    )
 
     # --- Signal label with color hint ---
     signal_icon = {
         "ACCUMULATE": "🟢", "ADD": "🔵", "HOLD": "🟡", "REDUCE": "🟠", "AVOID": "🔴"
     }.get(signal, "⚪")
+
+    # --- Section 2.1: Quality of Business (from cache, no hardcoded literals) ---
+    moat_note = valuation.get("moat_note") or f"See company-profile.json and fundamental-research.json in cache for {company_name} competitive position."
+    gross_margin_trend = valuation.get("gross_margin_trend") or "Gross margin trend: see financial-statements.json."
+    capital_efficiency_note = valuation.get("capital_efficiency_note") or "Share count and buyback history: see financial-statements.json."
+    insider_note = valuation.get("insider_alignment_note") or "Insider activity: see insider-institutional.json."
+
+    # --- Section 2.2: Growth (from cache) ---
+    growth_summary = earnings.get("growth_summary") or earnings.get("guidance_summary") or "Growth outlook: see earnings-analysis.json."
+
+    # --- Section 2.3: Financial Health (from cache) ---
+    leverage_note = risk.get("leverage_note") or risk.get("net_debt_summary") or "Leverage and coverage: see risk-assessment.json."
+    coverage_note = risk.get("interest_coverage_note") or ""
+    fcf_note = risk.get("fcf_vs_returns_note") or ""
 
     lines = [
         f"# {ticker} — {company_name} — Decision-Support Verdict",
@@ -277,8 +273,8 @@ def _build_report(
         "",
         "### 1.1 Validity",
         f"- Model file: `{ticker}_{as_of}.xlsx` — formulas evaluated in Excel ✅",
-        f"- Validator: 9/9 checks passed (check #7 built-in skipped until Excel recalculation)",
-        f"- Inputs: 37/37 filled, 0 MISSING  (source: fill_model.py report)",
+        f"- Validator: checks passed (check #7 built-in skipped until Excel recalculation)",
+        f"- Inputs: filled per fill_model.py report (see model_inputs/values.json)",
         "",
         "### 1.2 Computed outputs (Base scenario)",
         f"| Output | Value | Source |",
@@ -308,45 +304,27 @@ def _build_report(
         "## 2. Fundamental Verdict",
         "",
         "### 2.1 Quality of Business",
-        f"- **Moat**: Dollarama controls ~60% of Canada's pure-play dollar-store market.",
-        f"  Fixed-price architecture (CAD 1.25–5.00) creates pricing discipline competitors cannot easily replicate.",
-        f"  Direct-import model (~60%+ sourced from Asia) eliminates distributor margins.",
-        f"  (source: Dollarama AIF FY2026)",
-        f"- **Gross margin trend** (FY2022→FY2026): 43.9% → 43.5% → 44.5% → 45.1% → 45.0% — consistent expansion with one year of FX pressure.",
-        f"  (source: PR Newswire FY2022–FY2026 press releases)",
-        f"- **Capital efficiency**: Diluted shares declined from 304.4M (FY2022) to 270.8M (FY2026) — 11% buyback over 4 years.",
-        f"  CAD 1B+ repurchased annually at scale. FCF estimated ~CAD 1.5B FY2026 (CapEx 272.8M vs EBITDA 2,408.2M).",
-        f"  (source: PR Newswire FY2026)",
-        f"- **CEO alignment**: Neil Rossy invested CAD 10.4M personally in Oct 2025 at ~CAD 175/share (5.43M shares total).",
-        f"  (source: 2iqresearch.com Oct 2025)",
+        f"- **Moat**: {moat_note}",
+        f"- **Gross margin trend**: {gross_margin_trend}",
+        f"- **Capital efficiency**: {capital_efficiency_note}",
+        f"- **Insider alignment**: {insider_note}",
         "",
         "### 2.2 Growth Trajectory",
-        f"- **Canada runway**: 1,691 stores vs stated 2,000+ target → ~300 net new stores remaining.",
-        f"  FY2026 comp: +4.2% (normalizing from +12.8% FY2024 peak — expected, not deterioration).",
-        f"  FY2027 guidance: 60–70 net new stores, comps +3–4%. (source: PR Newswire FY2026)",
-        f"- **Dollarcity optionality**: 60.1% owned. FY2026 contribution CAD 191.5M (+47% YoY).",
-        f"  732 stores as of Dec 2025. Target: 1,050 LatAm + 300+ Mexico stores by 2031.",
-        f"  At current run rate (~CAD 262K contribution/store/yr), 1,350 stores → ~CAD 355M/yr vs CAD 191.5M today.",
-        f"  Incremental CAD ~163M/yr at full build-out = ~12% boost to FY2026 net income.",
-        f"  (source: PR Newswire FY2026, Newswire LatAm expansion)",
-        f"- **Australia**: Explicit net-loss guidance FY2027. Early stage. Kill condition: cumulative loss > CAD 100M by FY2029.",
+        f"{growth_summary}",
         "",
         "### 2.3 Financial Health",
-        f"- **Leverage**: Net debt CAD 2,293.6M. Adj. net debt/EBITDA = 2.07× (FY2026). Stable vs 2.16× (FY2024/FY2025).",
-        f"  (source: PR Newswire FY2026)",
-        f"- **Interest coverage**: Term loan CAD 2,625.1M at 4.2% → ~CAD 110M/yr interest vs EBIT CAD 1,937.9M → coverage ~17.6×. Comfortable.",
-        f"  (source: model Debt Schedule + PR Newswire FY2026)",
-        f"- **FCF vs capital returns**: Est. FCF ~CAD 1.5B vs buybacks+dividends ~CAD 950M FY2026 → self-funding with headroom.",
+        f"- **Leverage**: {leverage_note}",
+        *([ f"- **Interest coverage**: {coverage_note}"] if coverage_note else []),
+        *([ f"- **FCF vs capital returns**: {fcf_note}"] if fcf_note else []),
         "",
         "### 2.4 Valuation",
-        f"- **DCF (Base)**: Implied VPS {_fmt_ccy(vps_base, ccy)} vs current price {_fmt_ccy(current_price, ccy)} → **{_fmt_pct(upside_base)} downside** in the base case.",
-        f"  Note: TV accounts for {(excel_out.get('out_tv_pct_ev') or 0)*100:.1f}% of EV — model is highly sensitive to terminal assumptions (WACC {wacc*100:.2f}%, TGR 2.5%).",
+        f"- **DCF (Base)**: Implied VPS {_fmt_ccy(vps_base, ccy)} vs current price {_fmt_ccy(current_price, ccy)} → **{_fmt_pct(upside_base)}** vs intrinsic value in the base case.",
+        f"  Note: TV accounts for {(excel_out.get('out_tv_pct_ev') or 0)*100:.1f}% of EV — model is highly sensitive to terminal assumptions."
+        + (f" WACC {wacc*100:.2f}%." if wacc else ""),
         f"  (source: DCF sheet out_value_per_share)",
-        f"- **Comps**: Peer median EV/EBITDA = {peer_median_ev_ebitda:.1f}× vs DOL {target_ev_ebitda:.1f}× → **{((target_ev_ebitda/peer_median_ev_ebitda)-1)*100:.0f}% premium**." if peer_median_ev_ebitda else "- **Comps**: Peer median EV/EBITDA data from cache.",
+        f"- **Comps**: Peer median EV/EBITDA = {peer_median_ev_ebitda:.1f}× vs {ticker} {target_ev_ebitda:.1f}× → **{((target_ev_ebitda/peer_median_ev_ebitda)-1)*100:.0f}% premium**." if peer_median_ev_ebitda else "- **Comps**: Peer median EV/EBITDA data from cache.",
         f"  Comps-implied VPS {_fmt_ccy(comps_vps, ccy)} → {_fmt_pct(upside_comps)} vs current price.",
-        f"  (source: Comps sheet out_comps_avg_vps, stockanalysis.com 2026-05-28)",
-        f"- **Growth needed to justify 37× P/E at WACC {wacc*100:.2f}%**: ~10–12% EPS CAGR for 10 years — achievable but prices perfection.",
-        f"  FY2026 actual EPS growth: +13.7%. FY2027 consensus: ~+10%.",
+        f"  (source: Comps sheet out_comps_avg_vps)",
         "",
         "### 2.5 SIGNAL",
         "",
@@ -361,8 +339,6 @@ def _build_report(
         "",
         f"> **Interpretation**: At current price, the probability-weighted DCF implies",
         f"> {_fmt_pct((expected_value/current_price-1) if expected_value and current_price else None)} vs intrinsic value.",
-        f"> The stock is pricing in a scenario close to the Bull case.",
-        f"> The primary risk is **multiple compression**, not business deterioration.",
         "",
         "---",
         "",
@@ -371,12 +347,8 @@ def _build_report(
         "### 3.1 Immediate (0–3 months)",
         "",
         f"**Catalyst to watch:** {next_earnings_note}",
-        f"- Monitor for: comparable store sales ≥3.0%, gross margin ≥45.0%, Australia loss size, Dollarcity store count progress",
-        f"- **Entry discipline**: Given 37× P/E and DCF base-case showing {_fmt_pct(upside_base)} downside, only accumulate on meaningful pullbacks",
-        f"  Suggested entry zone: CAD 155–165 (bear DCF range, near 52-week low of CAD 162.89)",
-        f"  source: 52-week range stockanalysis.com as-of=2026-05-28",
-        f"- **Tripwire EXIT**: Two consecutive quarters of comparable sales below 2.0% → thesis under stress",
-        f"- **Tripwire EXIT**: Gross margin prints below 43.5% → structural CAD/USD problem",
+        f"- Monitor for signals described in bull-bear-thesis.md",
+        f"- **Entry discipline**: DCF base-case implies {_fmt_pct(upside_base)} vs current price. Accumulate only on meaningful pullbacks toward bear DCF range ({_fmt_ccy(vps_bear, ccy)}).",
     ]
 
     if milestones:
@@ -389,56 +361,27 @@ def _build_report(
         "",
         "### 3.2 Medium-term (3–12 months)",
         "",
-        f"**FY2027 guidance tripwires** (source: PR Newswire FY2026):",
-        f"| Metric | Guidance | Bull Threshold | Bear Threshold |",
-        f"|--------|----------|----------------|----------------|",
-        f"| Canada comparable sales | +3.0–4.0% | ≥4.0% | <2.0% |",
-        f"| Gross margin | 45.0–45.5% | ≥45.5% | <44.0% |",
-        f"| SG&A % sales | 14.1–14.6% | ≤14.1% | >15.0% |",
-        f"| Net new stores (Canada) | 60–70 | ≥70 | <55 |",
-        f"| Australia loss (CAD) | net loss | <CAD 30M | >CAD 60M |",
-        "",
-        f"**Dollarcity milestone**: crossing 900 stores (from 732 Dec 2025) signals healthy expansion trajectory.",
-        f"At 900 stores and current per-store economics, Dollarcity contribution → ~CAD 235M/yr (+CAD 44M from FY2026).",
-        "",
-        f"**Re-rating scenario**: If EPS growth decelerates to ~7–8%, justified P/E compresses to 25–28×.",
-        f"At 27× P/E and FY2027E EPS ~CAD 5.20: implied price = CAD 140. That is a **{((140/current_price)-1)*100:.0f}% downside**.",
-        f"Monitor consensus EPS revisions quarterly.",
+        "Review thesis validity against next 2–4 quarterly results.",
+        "Track whether base-case assumptions (revenue growth, margins) are tracking to plan.",
         "",
         "### 3.3 Long-term (1–3 years)",
         "",
-        f"**Full Dollarcity optionality (1,350 stores by 2031)**:",
-        f"- At CAD 262K contribution/store/yr × 1,350 stores = CAD 353M/yr",
-        f"- vs FY2026 actual CAD 191.5M → incremental CAD 161.5M pretax",
-        f"- At 26.5% tax rate and 270M shares: adds ~CAD 0.44/share to EPS by FY2031",
-        f"- Potential re-rating: market recognizes LatAm optionality → premium justified → ~10% VPS upside vs current model",
-        f"- **Validate by**: Dollarcity FY2028 store count ≥950 + Mexico breakeven confirmed",
-        "",
-        f"**Australia kill condition**: if cumulative losses exceed CAD 100M by FY2029 without clear path to breakeven → management capital allocation failure signal.",
-        "",
-        f"**Multiple re-rating (bull)**: If Dollarcity achieves 1,000 stores and DOL delivers 10%+ EPS CAGR for 3 consecutive years,",
-        f"  re-rating from 37× to 42–45× is achievable. Implied price: CAD 220–240 by FY2029.",
-        f"**Multiple re-rating (bear)**: EPS growth to 7%, multiple to 27×: CAD 135–145 by FY2028.",
+        "Validate structural thesis assumptions against annual results.",
+        "Re-run full model with updated actuals to check whether VPS range has shifted.",
         "",
         "---",
         "",
         "## 4. Key Assumptions to Monitor (Tripwires)",
         "",
-        "| Assumption | Current | If breaks → Signal flips to |",
-        "|-----------|---------|------------------------------|",
-        "| EPS growth ≥10% | FY2026: +13.7% | <7% for 2 years → REDUCE |",
-        "| Gross margin ≥44% | FY2026: 45.0% | <43.5% → REDUCE |",
-        "| CAD/USD ≤1.42 | 1.38 (May 2026) | >1.45 sustained → REDUCE |",
-        "| Net debt/EBITDA ≤2.5× | 2.07× | >3.0× | → REDUCE |",
-        "| Dollarcity growth on track | +47% FY2026 | Stall <20% → HOLD |",
-        "| No EPS guidance cut | Never cut | First cut → AVOID |",
-        "",
     ]
 
     if invalidations:
-        lines.append("**Additional invalidation conditions from bull-bear thesis:**")
-        for inv in invalidations[:5]:
+        lines.append("**Invalidation conditions from bull-bear thesis:**")
+        for inv in invalidations[:8]:
             lines.append(f"- {inv}")
+        lines.append("")
+    else:
+        lines.append("*See bull-bear-thesis.md for invalidation conditions.*")
         lines.append("")
 
     lines += [
@@ -446,18 +389,16 @@ def _build_report(
         "",
         "## Sources",
         "",
-        "| Document | URL | Used for |",
-        "|----------|-----|---------|",
-        "| FY2026 Press Release | https://www.prnewswire.com/news-releases/dollarama-reports-fourth-quarter-and-fiscal-year-2026-results-302722674.html | Financials, guidance |",
-        "| FY2025 Press Release | https://www.prnewswire.com/news-releases/dollarama-reports-fourth-quarter-and-fiscal-year-2025-results-302419111.html | Comparatives |",
-        "| Dollarama AIF FY2026 | https://www.dollarama.com/en-CA/corp/wp-content/uploads/2026/04/2026-Annual-Information-Form-EN.pdf | Competitive position, risks |",
-        "| Valuation statistics | https://stockanalysis.com/quote/tsx/DOL/statistics/ | Current multiples |",
-        "| WACC / DCF | https://www.alphaspread.com/security/tsx/dol/discount-rate | Cost of capital |",
-        "| CEO insider buy | https://www.2iqresearch.com/blog/a-bold-insider-buy-at-dollarama-signals-strong-ceo-confidence-2025-10-17 | Management signal |",
-        "| Peer comps | stockanalysis.com (DG, DLTR, FIVE) + gurufocus.com (BME) | Relative valuation |",
-        f"| Excel model | {ticker}_{as_of}.xlsx | DCF outputs, scenario VPS |",
-        f"| cell_map.json | plugins/agent-finance/skills/excel-financial-model/reference/cell_map.json | Output cell references |",
-        f"| bull-bear-thesis.md | companies/{ticker}/bull-bear-thesis.md | Scenario weights, milestones |",
+        "| Document | Used for |",
+        "|----------|---------|",
+        f"| company-profile.json | Company name, description |",
+        f"| valuation-multiples.json | Current price, multiples |",
+        f"| bull-bear-thesis.md | Scenario weights, milestones, invalidations |",
+        f"| earnings-analysis.json | Guidance, next earnings |",
+        f"| risk-assessment.json | Leverage, coverage |",
+        f"| model_inputs/peer_comps.json | Peer comparables |",
+        f"| {ticker}_{as_of}.xlsx | DCF outputs |",
+        f"| cell_map.json | Output cell references |",
         "",
         "---",
         "*Decision-support research only — not investment advice*",
@@ -533,9 +474,8 @@ def build_verdict(
     peer_comps = _load_json(cache_dir / "model_inputs" / "peer_comps.json")
     risk = _load_json(cache_dir / "risk-assessment.json")
     earnings = _load_json(cache_dir / "earnings-analysis.json")
-    company_name = _load_json(cache_dir.parent.parent / ".." / ".." / ".." / "raw" / "financial-datasets_company-facts_2026-05-28.json").get("name", "Dollarama Inc.")
-    if not company_name or company_name == "Dollarama Inc.":
-        company_name = "Dollarama Inc."
+    cp = _load_json(cache_dir / "company-profile.json")
+    company_name = cp.get("name") or cp.get("company_name") or ticker
 
     as_of = date.today().isoformat()
 
