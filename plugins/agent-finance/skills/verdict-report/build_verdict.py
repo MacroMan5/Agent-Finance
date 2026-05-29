@@ -79,10 +79,97 @@ def _read_excel_outputs(model_path: Path, cell_map: dict) -> dict[str, Any]:
 def _run_scenario_vps(model_path: Path, scenario: int,
                       values_path: Path, sources_path: Path,
                       cell_map: dict) -> float | None:
-    """openpyxl cannot evaluate Excel formulas — scenario VPS cannot be computed
-    from in-memory re-run. Returns None; the caller falls back to vps_base and
-    surfaces this in verdict["gaps"]."""
-    return None
+    """Set the scenario selector in the xlsx via Excel COM, trigger a full
+    recalculation, and read back out_value_per_share.
+
+    Requires win32com (Windows only). Falls back to None on any error so the
+    caller can degrade gracefully. The workbook is left in Base (scenario=2)
+    state after all three passes complete — callers must run Bull then Bear
+    then Base in sequence, or accept that the final save state matches the
+    last scenario requested.
+    """
+    try:
+        import win32com.client
+        import time
+    except ImportError:
+        return None
+
+    vps_entry = cell_map.get("out_value_per_share")
+    if not vps_entry:
+        return None
+
+    try:
+        xl = win32com.client.Dispatch("Excel.Application")
+        xl.Visible = False
+        xl.DisplayAlerts = False
+        xl.AskToUpdateLinks = False
+
+        wb = xl.Workbooks.Open(str(model_path.resolve()), UpdateLinks=0, ReadOnly=False)
+        ws_assump = wb.Worksheets("Assumptions")
+        ws_dcf = wb.Worksheets(vps_entry["sheet"])
+
+        ws_assump.Cells(9, 3).Value = scenario
+        xl.CalculateFullRebuild()
+        time.sleep(2)
+
+        val = ws_dcf.Range(vps_entry["cell"]).Value
+        wb.Close(SaveChanges=False)
+        xl.Quit()
+        return float(val) if val is not None else None
+    except Exception:
+        try:
+            xl.Quit()
+        except Exception:
+            pass
+        return None
+
+
+def _run_all_scenarios(model_path: Path, cell_map: dict) -> tuple[float | None, float | None]:
+    """Run Bull (1) and Bear (3) scenarios in a single Excel COM session,
+    then restore Base (2) and save.  Returns (vps_bull, vps_bear).
+
+    Opens Excel once, cycles through scenarios 1→3→2, saves in Base state.
+    Falls back to (None, None) if win32com is unavailable or any error occurs.
+    """
+    try:
+        import win32com.client
+        import time
+    except ImportError:
+        return None, None
+
+    vps_entry = cell_map.get("out_value_per_share")
+    if not vps_entry:
+        return None, None
+
+    xl = None
+    try:
+        xl = win32com.client.Dispatch("Excel.Application")
+        xl.Visible = False
+        xl.DisplayAlerts = False
+        xl.AskToUpdateLinks = False
+
+        wb = xl.Workbooks.Open(str(model_path.resolve()), UpdateLinks=0, ReadOnly=False)
+        ws_assump = wb.Worksheets("Assumptions")
+        ws_dcf = wb.Worksheets(vps_entry["sheet"])
+
+        results: dict[int, float | None] = {}
+        for scenario in (1, 3, 2):  # Bull, Bear, Base (Base last = saved state)
+            ws_assump.Cells(9, 3).Value = scenario
+            xl.CalculateFullRebuild()
+            time.sleep(2)
+            val = ws_dcf.Range(vps_entry["cell"]).Value
+            results[scenario] = float(val) if val is not None else None
+
+        wb.Save()
+        wb.Close(SaveChanges=False)
+        xl.Quit()
+        return results.get(1), results.get(3)
+    except Exception:
+        try:
+            xl.Quit()
+        except Exception:
+            pass
+        return None, None
 
 
 # ---------------------------------------------------------------------------
@@ -432,11 +519,16 @@ def build_verdict(
             "Open the model in Microsoft Excel once to recalculate, then re-run."
         )
 
-    # 2. Bull / Bear VPS via in-memory re-run
+    # 2. Bull / Bear VPS — all three scenarios in a single Excel COM session.
+    # _run_scenario_vps opens a new Excel instance per call; batching avoids
+    # repeated launch overhead and ensures the workbook is saved in Base state.
     values_path = cache_dir / "model_inputs" / "values.json"
     sources_path = cache_dir / "model_inputs" / "sources.json"
-    vps_bull = _run_scenario_vps(model_path, 1, values_path, sources_path, cell_map)
-    vps_bear = _run_scenario_vps(model_path, 3, values_path, sources_path, cell_map)
+    vps_bull, vps_bear = _run_all_scenarios(model_path, cell_map)
+    if vps_bull is None:
+        vps_bull = _run_scenario_vps(model_path, 1, values_path, sources_path, cell_map)
+    if vps_bear is None:
+        vps_bear = _run_scenario_vps(model_path, 3, values_path, sources_path, cell_map)
 
     # 3. Bull-bear thesis
     thesis = _parse_bull_bear_thesis(cache_dir / "bull-bear-thesis.md")
