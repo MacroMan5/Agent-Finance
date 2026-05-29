@@ -64,6 +64,10 @@ subagent.
    d. **If the validator exits non-zero OR `missing_critical_count > 0`, do NOT
       deliver the model.** Report the exact list of failed checks and missing
       inputs to the orchestrator and halt. No partial deliveries.
+   e. **After Excel recalculation** (open in Excel once), optionally run
+      `verdict-report/build_verdict.py` to produce the decision-support verdict
+      and action plan. Required when the user asks for a signal, moves, or
+      recommendation.
 
 ## Hard rules
 

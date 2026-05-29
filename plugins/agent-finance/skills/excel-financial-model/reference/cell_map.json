@@ -655,5 +655,80 @@
     "sheet": "Assumptions",
     "cell": "F63",
     "kind": "range"
+  },
+  "in_shares_outstanding": {
+    "named_range": "rng_shares",
+    "sheet": "Assumptions",
+    "cell": "C76",
+    "kind": "input",
+    "fill_strategy": "direct",
+    "metric": "shares_outstanding",
+    "units": "mm"
+  },
+  "in_cur_price": {
+    "named_range": "rng_cur_price",
+    "sheet": "Assumptions",
+    "cell": "C77",
+    "kind": "input",
+    "fill_strategy": "direct",
+    "metric": "current_price",
+    "units": "ccy"
+  },
+  "in_cash_latest": {
+    "named_range": "rng_cash_latest",
+    "sheet": "Assumptions",
+    "cell": "C78",
+    "kind": "input",
+    "fill_strategy": "direct",
+    "metric": "cash_latest",
+    "units": "ccy_mm"
+  },
+  "in_rev_hist_fy1": {
+    "sheet": "Assumptions",
+    "cell": "C79",
+    "kind": "input",
+    "fill_strategy": "direct",
+    "metric": "rev_hist_fy1",
+    "units": "ccy_mm"
+  },
+  "in_rev_hist_fy2": {
+    "sheet": "Assumptions",
+    "cell": "D79",
+    "kind": "input",
+    "fill_strategy": "direct",
+    "metric": "rev_hist_fy2",
+    "units": "ccy_mm"
+  },
+  "in_rev_hist_fy3": {
+    "sheet": "Assumptions",
+    "cell": "E79",
+    "kind": "input",
+    "fill_strategy": "direct",
+    "metric": "rev_hist_fy3",
+    "units": "ccy_mm"
+  },
+  "in_cogs_hist_fy1": {
+    "sheet": "Assumptions",
+    "cell": "C80",
+    "kind": "input",
+    "fill_strategy": "direct",
+    "metric": "cogs_hist_fy1",
+    "units": "ccy_mm"
+  },
+  "in_cogs_hist_fy2": {
+    "sheet": "Assumptions",
+    "cell": "D80",
+    "kind": "input",
+    "fill_strategy": "direct",
+    "metric": "cogs_hist_fy2",
+    "units": "ccy_mm"
+  },
+  "in_cogs_hist_fy3": {
+    "sheet": "Assumptions",
+    "cell": "E80",
+    "kind": "input",
+    "fill_strategy": "direct",
+    "metric": "cogs_hist_fy3",
+    "units": "ccy_mm"
   }
 }

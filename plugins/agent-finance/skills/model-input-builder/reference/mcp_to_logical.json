@@ -121,5 +121,69 @@
     "transform": "identity",
     "fallback": null,
     "critical": false
+  },
+  "in_shares_outstanding": {
+    "source_file": "valuation-multiples.json",
+    "json_path": "shares_outstanding_m",
+    "transform": "identity",
+    "fallback": null,
+    "critical": true
+  },
+  "in_cur_price": {
+    "source_file": "valuation-multiples.json",
+    "json_path": "stock_price_cad",
+    "json_path_fallbacks": ["stock_price_usd", "stock_price"],
+    "transform": "identity",
+    "fallback": null,
+    "critical": true
+  },
+  "in_cash_latest": {
+    "source_file": "financial-statements.json",
+    "json_path": "annual[-1].cash_and_equivalents",
+    "transform": "identity",
+    "fallback": null,
+    "critical": false
+  },
+  "in_rev_hist_fy1": {
+    "source_file": "financial-statements.json",
+    "json_path": "annual[-3].revenue",
+    "transform": "identity",
+    "fallback": null,
+    "critical": true
+  },
+  "in_rev_hist_fy2": {
+    "source_file": "financial-statements.json",
+    "json_path": "annual[-2].revenue",
+    "transform": "identity",
+    "fallback": null,
+    "critical": true
+  },
+  "in_rev_hist_fy3": {
+    "source_file": "financial-statements.json",
+    "json_path": "annual[-1].revenue",
+    "transform": "identity",
+    "fallback": null,
+    "critical": true
+  },
+  "in_cogs_hist_fy1": {
+    "source_file": "financial-statements.json",
+    "json_path": "annual[-3]",
+    "transform": "cogs_from_gp",
+    "fallback": null,
+    "critical": false
+  },
+  "in_cogs_hist_fy2": {
+    "source_file": "financial-statements.json",
+    "json_path": "annual[-2]",
+    "transform": "cogs_from_gp",
+    "fallback": null,
+    "critical": false
+  },
+  "in_cogs_hist_fy3": {
+    "source_file": "financial-statements.json",
+    "json_path": "annual[-1]",
+    "transform": "cogs_from_gp",
+    "fallback": null,
+    "critical": false
   }
 }

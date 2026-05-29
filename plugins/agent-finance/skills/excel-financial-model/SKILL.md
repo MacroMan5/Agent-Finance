@@ -124,8 +124,13 @@ python "$CLAUDE_PLUGIN_ROOT/skills/excel-financial-model/fill_model.py" \
     --template "$CLAUDE_PLUGIN_ROOT/skills/excel-financial-model/template/model_template.xlsx" \
     --output   "$CLAUDE_PROJECT_DIR/output/agent-finance/models/AAPL_2026-05-28.xlsx" \
     --values   "${CLAUDE_PLUGIN_DATA}/companies/AAPL/model_inputs/values.json" \
-    --sources  "${CLAUDE_PLUGIN_DATA}/companies/AAPL/model_inputs/sources.json"
+    --sources  "${CLAUDE_PLUGIN_DATA}/companies/AAPL/model_inputs/sources.json" \
+    --comps    "${CLAUDE_PLUGIN_DATA}/companies/AAPL/model_inputs/peer_comps.json"
 ```
+
+`--comps` is optional but **strongly recommended** — without it the Comps tab
+ships with placeholder peer data. `valuation-multiples` produces
+`peer_comps.json` automatically when run before `excel-financial-model`.
 
 `fill_model.py` returns a JSON report: `{written, skipped, missing}`.
 

@@ -57,6 +57,22 @@ CRITICAL_INPUTS = {
     "in_beta_base", "in_beta_bull", "in_beta_bear",
     "in_erp_base", "in_erp_bull", "in_erp_bear",
     "in_tgr_base", "in_tgr_bull", "in_tgr_bear",
+    "in_shares_outstanding", "in_cur_price",
+    "in_rev_hist_fy1", "in_rev_hist_fy2", "in_rev_hist_fy3",
+}
+
+# Cells that must not contain the text sentinel "MISSING" after pipeline fill.
+# These map logical names to their Assumptions-sheet coordinates.
+SENTINEL_CELLS = {
+    "in_shares_outstanding": ("Assumptions", "C76"),
+    "in_cur_price":          ("Assumptions", "C77"),
+    "in_cash_latest":        ("Assumptions", "C78"),
+    "in_rev_hist_fy1":       ("Assumptions", "C79"),
+    "in_rev_hist_fy2":       ("Assumptions", "D79"),
+    "in_rev_hist_fy3":       ("Assumptions", "E79"),
+    "in_cogs_hist_fy1":      ("Assumptions", "C80"),
+    "in_cogs_hist_fy2":      ("Assumptions", "D80"),
+    "in_cogs_hist_fy3":      ("Assumptions", "E80"),
 }
 
 # v2 template built-in check cells (read from Checks sheet via cell_map).
@@ -333,6 +349,26 @@ def validate(model_path: Path) -> dict:
                 "fill_status": fill_statuses,
             })
     report["checks"]["9_scenario_coverage"] = scen_check
+
+    # --- 10. Sentinel text detector ------------------------------------------
+    # Cells that should be filled by the pipeline must not still contain the
+    # text "MISSING" written by the template (as opposed to a numeric value).
+    # Reading raw (data_only=False) catches string sentinels regardless of
+    # whether Excel has recalculated the workbook.
+    sentinel_check = {"passed": True, "details": []}
+    wb_raw = load_workbook(model_path, data_only=False)
+    for logical, (sheet_name, cell_addr) in SENTINEL_CELLS.items():
+        if sheet_name not in wb_raw.sheetnames:
+            continue
+        val = wb_raw[sheet_name][cell_addr].value
+        if isinstance(val, str) and val.strip().upper() == "MISSING":
+            sentinel_check["passed"] = False
+            sentinel_check["details"].append({
+                "logical_name": logical,
+                "cell": f"{sheet_name}!{cell_addr}",
+                "error": f"Template placeholder not overwritten: {cell_addr} still reads 'MISSING'",
+            })
+    report["checks"]["10_sentinel_placeholder_check"] = sentinel_check
 
     # --- aggregate -----------------------------------------------------------
     report["passed"] = all(c["passed"] for c in report["checks"].values())

@@ -33,6 +33,10 @@ For a fresh ticker:
    instead.
 4. When the subagent returns, hand its summary to `report-composer` for the
    final deliverable.
+5. If the user's request includes a verdict, recommendation, signal, "moves",
+   "buy/sell", or "que faire", invoke `verdict-report` after `report-composer`.
+   Pass: `--ticker`, `--model`, `--cache`, `--output` (use
+   `${CLAUDE_PROJECT_DIR}/output/agent-finance/reports/<TICKER>_verdict_<DATE>.md`).
 
 For a multi-ticker comparison:
 

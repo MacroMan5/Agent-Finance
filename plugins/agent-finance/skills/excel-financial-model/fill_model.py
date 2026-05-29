@@ -73,6 +73,10 @@ def fill(
     output_path = Path(output_path)
     cell_map = _load_cell_map()
 
+    # Extract Comps peers before cell_map validation (not a named range).
+    comps_peers = values.pop("_comps_peers", None)
+    comps_source = sources.pop("_comps_peers", None)
+
     input_keys = {k for k, v in cell_map.items() if v["kind"] == "input"}
 
     unknown = set(values) - set(cell_map)
@@ -127,19 +131,49 @@ def fill(
         row = int("".join(ch for ch in entry["cell"] if ch.isdigit()))
         wb[entry["sheet"]].cell(row=row, column=12, value=sources[name])
 
-    # Write MISSING annotations into the source column (cell stays blank).
+    # Write MISSING annotations: clear the cell (erase any template sentinel)
+    # and write the reason in the source column (col L).
     for m in missing_entries:
         entry = cell_map[m["name"]]
+        sheet = wb[entry["sheet"]]
+        sheet[entry["cell"]] = None  # erase template placeholder/sentinel
         row = int("".join(ch for ch in entry["cell"] if ch.isdigit()))
-        wb[entry["sheet"]].cell(row=row, column=12, value=f"MISSING: {m['reason']}")
+        sheet.cell(row=row, column=12, value=f"MISSING: {m['reason']}")
+
+    # --- Fill Comps tab from peer_comps.json if passed via --comps ---
+    comps_written = _fill_comps(wb, comps_peers, comps_source)
 
     wb.save(output_path)
 
     return {
-        "written": written,
+        "written": written + comps_written,
         "skipped": skipped,
         "missing": missing_entries,
     }
+
+
+def _fill_comps(wb, peers: list | None, source: str | None) -> int:
+    """Write peer rows into the Comps sheet.
+
+    peers: list of dicts with keys: name, ev_sales, ev_ebitda, pe, p_fcf
+    Rows 7-10 (up to 4 peers). Median row 11 stays as formula.
+    Returns count of cells written.
+    """
+    if not peers:
+        return 0
+    ws = wb["Comps"]
+    written = 0
+    for i, peer in enumerate(peers[:4]):
+        row = 7 + i
+        ws.cell(row, 2).value = peer.get("name", f"Peer {i+1}")
+        ws.cell(row, 3).value = peer.get("ev_sales")
+        ws.cell(row, 4).value = peer.get("ev_ebitda")
+        ws.cell(row, 5).value = peer.get("pe")
+        ws.cell(row, 6).value = peer.get("p_fcf")
+        ws.cell(row, 7).value = source or peer.get("source", "")
+        written += 5
+    ws.cell(11, 2).value = "Peer Median (excl. subject)"
+    return written
 
 
 if __name__ == "__main__":
@@ -158,12 +192,29 @@ if __name__ == "__main__":
         required=True,
         help="Path to JSON file mapping logical_name -> source string.",
     )
+    parser.add_argument(
+        "--comps",
+        default=None,
+        help="Optional path to peer_comps.json — list of {name, ev_sales, ev_ebitda, pe, p_fcf, source}.",
+    )
     args = parser.parse_args()
 
     with open(args.values, encoding="utf-8") as f:
         vals = json.load(f)
     with open(args.sources, encoding="utf-8") as f:
         srcs = json.load(f)
+
+    comps_peers = None
+    comps_source = None
+    if args.comps:
+        with open(args.comps, encoding="utf-8") as f:
+            comps_data = json.load(f)
+        comps_peers = comps_data.get("peers", comps_data)
+        comps_source = comps_data.get("source", f"peer_comps.json as-of {comps_data.get('as_of','')}")
+
+    if comps_peers:
+        vals["_comps_peers"] = comps_peers
+        srcs["_comps_peers"] = comps_source
 
     report = fill(args.template, args.output, vals, srcs)
     print(f"Wrote {args.output}")

@@ -113,6 +113,15 @@ def _apply_transform(value: Any, transform: str) -> Any:
         # If value looks like it's already in decimal form (< 1.0), keep it.
         v = float(value)
         return v / 100.0 if v > 1.5 else v
+    if transform == "cogs_from_gp":
+        # value is the full annual dict item; compute COGS = revenue * (1 - gross_margin)
+        if not isinstance(value, dict):
+            return None
+        rev = value.get("revenue")
+        gm = value.get("gross_margin")
+        if rev is None or gm is None:
+            return None
+        return round(float(rev) * (1.0 - float(gm)), 4)
     return value
 
 
@@ -158,6 +167,12 @@ def build_inputs(ticker: str, cache_dir_override: str | None = None, output_dir_
 
         if cache_data is not None:
             raw = _resolve_path(cache_data, mapping["json_path"])
+            # Try json_path_fallbacks if primary path returned nothing.
+            if raw is None:
+                for alt_path in mapping.get("json_path_fallbacks", []):
+                    raw = _resolve_path(cache_data, alt_path)
+                    if raw is not None:
+                        break
 
         # Try fallback if primary path failed.
         if raw is None and mapping.get("fallback"):
