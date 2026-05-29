@@ -316,7 +316,7 @@ def _build_report(
     # Current multiples from valuation
     cur = valuation.get("current", {})
     mult = valuation.get("multiples_vs_peers", {})
-    target_ev_ebitda = (mult.get("ev_ebitda_ntm") or {}).get("target") or 22.1
+    target_ev_ebitda = (mult.get("ev_ebitda_ntm") or {}).get("target")
 
     # Milestones for action plan
     milestones = thesis.get("milestones", [])
@@ -409,7 +409,9 @@ def _build_report(
         f"  Note: TV accounts for {(excel_out.get('out_tv_pct_ev') or 0)*100:.1f}% of EV — model is highly sensitive to terminal assumptions."
         + (f" WACC {wacc*100:.2f}%." if wacc else ""),
         f"  (source: DCF sheet out_value_per_share)",
-        f"- **Comps**: Peer median EV/EBITDA = {peer_median_ev_ebitda:.1f}× vs {ticker} {target_ev_ebitda:.1f}× → **{((target_ev_ebitda/peer_median_ev_ebitda)-1)*100:.0f}% premium**." if peer_median_ev_ebitda else "- **Comps**: Peer median EV/EBITDA data from cache.",
+        (f"- **Comps**: Peer median EV/EBITDA = {peer_median_ev_ebitda:.1f}× vs {ticker} {target_ev_ebitda:.1f}× → **{((target_ev_ebitda/peer_median_ev_ebitda)-1)*100:.0f}% premium**."
+         if peer_median_ev_ebitda and target_ev_ebitda
+         else "- **Comps**: Peer median EV/EBITDA data not available in cache."),
         f"  Comps-implied VPS {_fmt_ccy(comps_vps, ccy)} → {_fmt_pct(upside_comps)} vs current price.",
         f"  (source: Comps sheet out_comps_avg_vps)",
         "",
@@ -555,7 +557,13 @@ def build_verdict(
     # 5. Current price
     if current_price is None:
         vm = _load_json(cache_dir / "valuation-multiples.json")
-        current_price = vm.get("stock_price_cad") or vm.get("current", {}).get("price") or 174.95
+        current_price = vm.get("stock_price_cad") or vm.get("current", {}).get("price")
+        if not current_price:
+            raise RuntimeError(
+                "Current price not found in valuation-multiples.json "
+                "(expected stock_price_cad or current.price). "
+                "Re-run valuation-multiples skill or pass --price explicitly."
+            )
 
     # 6. Signal
     signal = _compute_signal(expected_value, current_price)

@@ -276,9 +276,14 @@ def validate(model_path: Path) -> dict:
             v2_check["skipped"] = True
             v2_check["details"].append({"check": chk_name, "status": "skipped (no cached value)"})
             continue
-        # Excel formula returns TRUE/FALSE or a numeric diff (0 = balanced).
-        passed = v is True or v == "TRUE" or (isinstance(v, (int, float)) and abs(v) <= ABS_TOL)
-        if not passed:
+        # Excel formula returns TRUE/FALSE, a numeric diff (0 = balanced),
+        # or a string verdict: 'OK' = pass, 'REVIEW' = advisory warning (not
+        # a hard failure — the report surfaces it separately), 'FAIL' = fail.
+        if v is True or v == "TRUE" or v == "OK" or (isinstance(v, (int, float)) and abs(v) <= ABS_TOL):
+            pass  # check passed
+        elif isinstance(v, str) and v == "REVIEW":
+            v2_check["details"].append({"check": chk_name, "value": v, "advisory": True})
+        else:
             v2_check["passed"] = False
             v2_check["details"].append({"check": chk_name, "value": v})
     if v2_check["skipped"] and v2_check["passed"]:
